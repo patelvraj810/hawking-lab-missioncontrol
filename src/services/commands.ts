@@ -1,7 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { CommandEntry } from '@/data/mock';
+import { isMockMode } from '@/config/features';
 
-const USE_MOCK = true; // Toggle to false when Supabase is populated
+const USE_MOCK = isMockMode();
 
 export async function submitCommand(command: string, payload: Record<string, unknown>, issuedBy = 'admin'): Promise<CommandEntry> {
   const newCmd: CommandEntry = {

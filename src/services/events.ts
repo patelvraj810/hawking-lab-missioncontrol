@@ -1,7 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { EventEntry } from '@/data/mock';
+import { isMockMode } from '@/config/features';
 
-const USE_MOCK = true; // Toggle to false when Supabase is populated
+const USE_MOCK = isMockMode();
 
 export async function fetchEvents(filters?: { agent?: string; event_type?: string; limit?: number }): Promise<EventEntry[]> {
   if (USE_MOCK) return [];
