@@ -18,7 +18,7 @@ export async function submitCommand(command: string, payload: Record<string, unk
   if (!USE_MOCK) {
     const { data, error } = await supabase.from('commands').insert([{
       command,
-      payload,
+      payload: payload as unknown as import('@/integrations/supabase/types').Json,
       status: 'pending',
       issued_by: issuedBy,
     }]).select().single();

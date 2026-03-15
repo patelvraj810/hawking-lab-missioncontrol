@@ -24,7 +24,7 @@ export async function insertEvent(event: Omit<EventEntry, 'id'>) {
     event_type: event.event_type,
     project_id: event.project_id,
     task_id: event.task_id,
-    data: event.data as Record<string, unknown>,
+    data: event.data as unknown as import('@/integrations/supabase/types').Json,
   }]);
   if (error) throw error;
 }
