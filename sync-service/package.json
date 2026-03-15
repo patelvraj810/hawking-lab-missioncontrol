@@ -1,0 +1,26 @@
+{
+  "name": "mission-control-sync",
+  "version": "1.0.0",
+  "description": "OpenClaw sync service that bridges local state to Supabase",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "watch": "nodemon --exec ts-node src/index.ts"
+  },
+  "keywords": ["openclaw", "sync", "supabase"],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "chokidar": "^3.5.3",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

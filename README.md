@@ -1,73 +1,152 @@
-# Welcome to your Lovable project
+# OpenClaw Mission Control Dashboard
 
-## Project info
+Real-time dashboard for managing OpenClaw agents, projects, and system state.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Live Dashboard
 
-## How can I edit this code?
+**URL:** https://hawking-lab-missioncontrol.lovable.app/
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Agent Management** - View all agents, their status, current tasks, and costs
+- **Activity Timeline** - Real-time event stream from OpenClaw operations
+- **Command Console** - Send commands to agents and track execution
+- **System State** - Monitor phase goals, revenue, and system health
+- **Project Overview** - Track active projects and progress
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Architecture
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+┌─────────────────────┐      ┌──────────────────┐      ┌─────────────────┐
+│   OpenClaw Agents   │─────▶│   Sync Service   │─────▶│    Supabase     │
+│  ~/.openclaw/       │      │  (Node.js)       │      │   (PostgreSQL)  │
+│  - state.json       │      │  - File Watcher  │      │  - events       │
+│  - agents/*/task.json│      │  - Event Emitter │      │  - commands     │
+└─────────────────────┘      │  - Command Poller │      └────────┬────────┘
+                             └──────────────────┘               │
+                                                                │
+                             ┌──────────────────┐               │
+                             │    Dashboard     │◀──────────────┘
+                             │   (React + Vite) │
+                             │  - Real-time UI  │
+                             │  - Live Updates  │
+                             └──────────────────┘
 ```
 
-**Edit a file directly in GitHub**
+## Quick Start
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 1. Dashboard (Already Deployed)
 
-**Use GitHub Codespaces**
+The dashboard is live at: https://hawking-lab-missioncontrol.lovable.app/
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 2. Sync Service (Required for Real Data)
 
-## What technologies are used for this project?
+The sync service bridges your OpenClaw installation to Supabase:
 
-This project is built with:
+```bash
+# Install dependencies
+cd sync-service
+npm install
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Configure environment
+cp .env.example .env
+# Edit .env with your Supabase credentials
 
-## How can I deploy this project?
+# Start the service
+npm start
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### 3. Auto-Start on Boot (Optional)
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+# Install PM2 globally
+npm install -g pm2
 
-Yes, you can!
+# Start sync service
+cd sync-service
+pm2 start dist/index.js --name openclaw-sync
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+# Save PM2 configuration
+pm2 save
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+# Generate startup script
+pm2 startup
+```
+
+## Environment Variables
+
+### Dashboard (.env)
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+VITE_USE_MOCK=false
+```
+
+### Sync Service (.env)
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+OPENCLAW_HOME=~/.openclaw
+POLL_INTERVAL_MS=2000
+DEBOUNCE_MS=500
+```
+
+## Tech Stack
+
+- **Frontend:** React 18, TypeScript, Tailwind CSS, Vite
+- **UI Components:** Radix UI, shadcn/ui
+- **Backend:** Supabase (PostgreSQL, Real-time)
+- **Sync Service:** Node.js, Chokidar (file watching)
+
+## Database Schema
+
+### Events Table
+```sql
+CREATE TABLE events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
+  event_type TEXT NOT NULL,
+  agent TEXT,
+  project_id TEXT,
+  task_id TEXT,
+  data JSONB DEFAULT '{}'::jsonb
+);
+```
+
+### Commands Table
+```sql
+CREATE TABLE commands (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  command TEXT NOT NULL,
+  payload JSONB,
+  status TEXT NOT NULL DEFAULT 'pending',
+  issued_by TEXT,
+  result JSONB,
+  executed_at TIMESTAMPTZ
+);
+```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+```
+
+## License
+
+MIT
+
+## Credits
+
+Built with [Lovable](https://lovable.dev/) • Powered by OpenClaw
