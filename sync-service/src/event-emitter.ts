@@ -119,6 +119,38 @@ export async function emitEvents(events: SupabaseEvent[]): Promise<{ success: bo
 }
 
 /**
+ * Sync agent status to Supabase agents table
+ */
+export async function syncAgentToSupabase(agentId: string, agentData: any): Promise<void> {
+  const { getSupabase } = await import('./supabase-client');
+  const supabase = getSupabase();
+  
+  try {
+    const agentRecord = {
+      id: agentId,
+      name: agentData.agent?.charAt(0).toUpperCase() + agentData.agent?.slice(1) || agentId,
+      role: agentData.role || 'Agent',
+      model: agentData.model || 'unknown',
+      status: agentData.status || 'offline',
+      current_task: agentData.task || null,
+      last_activity: new Date().toISOString(),
+    };
+    
+    const { error } = await supabase
+      .from('agents')
+      .upsert([agentRecord], { onConflict: 'id' });
+    
+    if (error) {
+      console.error('[EventEmitter] Error syncing agent:', error.message);
+    } else {
+      console.log('[EventEmitter] Synced agent:', agentId, '-', agentData.status);
+    }
+  } catch (err) {
+    console.error('[EventEmitter] Exception syncing agent:', err);
+  }
+}
+
+/**
  * Process a file change and emit appropriate events
  */
 export async function processFileChange(fileEvent: FileChangeEvent): Promise<void> {
@@ -126,4 +158,9 @@ export async function processFileChange(fileEvent: FileChangeEvent): Promise<voi
   
   const events = transformToSupabaseEvents(fileEvent);
   await emitEvents(events);
+  
+  // Also sync agent to agents table
+  if (fileEvent.type === 'agent_task' && fileEvent.agent) {
+    await syncAgentToSupabase(fileEvent.agent, fileEvent.content);
+  }
 }
