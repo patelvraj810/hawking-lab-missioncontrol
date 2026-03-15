@@ -16,12 +16,12 @@ export async function submitCommand(command: string, payload: Record<string, unk
   };
 
   if (!USE_MOCK) {
-    const { data, error } = await supabase.from('commands').insert({
+    const { data, error } = await supabase.from('commands').insert([{
       command,
       payload,
       status: 'pending',
       issued_by: issuedBy,
-    }).select().single();
+    }]).select().single();
     if (error) throw error;
     return data as unknown as CommandEntry;
   }

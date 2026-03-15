@@ -18,14 +18,14 @@ export async function fetchEvents(filters?: { agent?: string; event_type?: strin
 
 export async function insertEvent(event: Omit<EventEntry, 'id'>) {
   if (USE_MOCK) return;
-  const { error } = await supabase.from('events').insert({
+  const { error } = await supabase.from('events').insert([{
     timestamp: event.timestamp,
     agent: event.agent,
     event_type: event.event_type,
     project_id: event.project_id,
     task_id: event.task_id,
     data: event.data as Record<string, unknown>,
-  });
+  }]);
   if (error) throw error;
 }
 
