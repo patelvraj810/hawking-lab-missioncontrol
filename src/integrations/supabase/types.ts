@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      commands: {
+        Row: {
+          command: string
+          created_at: string
+          executed_at: string | null
+          id: string
+          issued_by: string | null
+          payload: Json | null
+          result: Json | null
+          status: string
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          issued_by?: string | null
+          payload?: Json | null
+          result?: Json | null
+          status?: string
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          issued_by?: string | null
+          payload?: Json | null
+          result?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          agent: string | null
+          data: Json | null
+          event_type: string
+          id: string
+          project_id: string | null
+          task_id: string | null
+          timestamp: string
+        }
+        Insert: {
+          agent?: string | null
+          data?: Json | null
+          event_type: string
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          timestamp?: string
+        }
+        Update: {
+          agent?: string | null
+          data?: Json | null
+          event_type?: string
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
