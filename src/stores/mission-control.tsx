@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { fetchEvents, subscribeToEvents, fetchCommandHistory } from '@/services/events';
+import { fetchEvents, subscribeToEvents } from '@/services/events';
+import { fetchCommandHistory } from '@/services/commands';
 import type { Agent, Project, Task, SystemState, EventEntry, CommandEntry } from '@/data/mock';
+import { mockAgents, mockProjects, mockTasks, mockSystemState } from '@/data/mock';
 
 interface MissionControlState {
   agents: Agent[];
@@ -29,113 +30,28 @@ type MissionControlContextType = MissionControlState & MissionControlActions;
 
 const MissionControlContext = createContext<MissionControlContextType | null>(null);
 
-// Default empty state
-const defaultSystemState: SystemState = {
-  phase: 'Phase 1',
-  phaseGoals: [],
-  uptime: '0%',
-  totalRevenue: 0,
-  monthlyRevenue: 0,
-  activeProjects: 0,
-  totalAgents: 0,
-  onlineAgents: 0,
-  tasksTodayCompleted: 0,
-  tasksTodayTotal: 0,
-  apiCalls24h: 0,
-  avgLatency: 0,
-  failureRate: 0,
-};
-
 export function MissionControlProvider({ children }: { children: ReactNode }) {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [systemState, setSystemState] = useState<SystemState>(defaultSystemState);
+  // Agents, projects, tasks, systemState use mock data (no DB tables yet)
+  const [agents, setAgents] = useState<Agent[]>(mockAgents);
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [tasks] = useState<Task[]>(mockTasks);
+  const [systemState] = useState<SystemState>(mockSystemState);
+
+  // Events and commands come from real Supabase tables
   const [events, setEvents] = useState<EventEntry[]>([]);
   const [commands, setCommands] = useState<CommandEntry[]>([]);
   const [autonomousMode, setAutonomousMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Refresh all data from Supabase
   const refreshData = useCallback(async () => {
     try {
-      // Fetch events
-      const eventsData = await fetchEvents({ limit: 100 });
+      const [eventsData, commandsData] = await Promise.all([
+        fetchEvents({ limit: 100 }),
+        fetchCommandHistory(50),
+      ]);
       setEvents(eventsData);
-
-      // Fetch command history
-      const commandsData = await fetchCommandHistory(50);
       setCommands(commandsData);
-
-      // Fetch agents from Supabase (if agents table exists)
-      const { data: agentsData } = await supabase
-        .from('agents')
-        .select('*')
-        .order('last_activity', { ascending: false });
-
-      if (agentsData && agentsData.length > 0) {
-        const formattedAgents: Agent[] = agentsData.map(a => ({
-          id: a.id,
-          name: a.name || a.id,
-          role: a.role || 'Agent',
-          model: a.model || 'unknown',
-          status: a.status || 'offline',
-          currentTask: a.current_task || null,
-          lastActivity: a.last_activity || 'Never',
-          avatar: a.avatar || '🤖',
-          costTotal: a.cost_total || 0,
-          tasksCompleted: a.tasks_completed || 0,
-        }));
-        setAgents(formattedAgents);
-      }
-
-      // Fetch system state
-      const { data: stateData } = await supabase
-        .from('system_state')
-        .select('*')
-        .eq('id', 1)
-        .single();
-
-      if (stateData) {
-        setSystemState({
-          phase: stateData.phase || 'Phase 1',
-          phaseGoals: stateData.phase_goals || [],
-          uptime: stateData.uptime || '0%',
-          totalRevenue: stateData.total_revenue || 0,
-          monthlyRevenue: stateData.monthly_revenue || 0,
-          activeProjects: stateData.active_projects || 0,
-          totalAgents: stateData.total_agents || 0,
-          onlineAgents: stateData.online_agents || 0,
-          tasksTodayCompleted: 0,
-          tasksTodayTotal: 0,
-          apiCalls24h: 0,
-          avgLatency: 0,
-          failureRate: 0,
-        });
-      }
-
-      // Fetch projects from Supabase
-      const { data: projectsData } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-      if (projectsData && projectsData.length > 0) {
-        const formattedProjects: Project[] = projectsData.map(p => ({
-          id: p.id,
-          name: p.name || 'Untitled',
-          description: p.description || '',
-          goal: p.goal || '',
-          assignedAgents: p.assigned_agents || [],
-          progress: p.progress || 0,
-          status: p.status || 'planning',
-          createdAt: p.created_at || new Date().toISOString(),
-          taskCount: p.task_count || 0,
-          completedTasks: p.completed_tasks || 0,
-        }));
-        setProjects(formattedProjects);
-      }
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
@@ -143,7 +59,6 @@ export function MissionControlProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Initial data fetch
   useEffect(() => {
     refreshData();
   }, [refreshData]);
@@ -153,10 +68,7 @@ export function MissionControlProvider({ children }: { children: ReactNode }) {
     const subscription = subscribeToEvents((event) => {
       setEvents(prev => [event as EventEntry, ...prev].slice(0, 100));
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   const addEvent = useCallback((event: EventEntry) => {
