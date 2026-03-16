@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { fetchEvents, subscribeToEvents } from '@/services/events';
 import { fetchCommandHistory } from '@/services/commands';
+import { fetchAgents, subscribeToAgents } from '@/services/agents';
+import { fetchProjects } from '@/services/projects';
+import { fetchTasks, subscribeToTasks } from '@/services/tasks';
+import { fetchSystemState } from '@/services/system-state';
 import type { Agent, Project, Task, SystemState, EventEntry, CommandEntry } from '@/data/mock';
-import { mockAgents, mockProjects, mockTasks, mockSystemState } from '@/data/mock';
 
 interface MissionControlState {
   agents: Agent[];
@@ -31,13 +34,14 @@ type MissionControlContextType = MissionControlState & MissionControlActions;
 const MissionControlContext = createContext<MissionControlContextType | null>(null);
 
 export function MissionControlProvider({ children }: { children: ReactNode }) {
-  // Agents, projects, tasks, systemState use mock data (no DB tables yet)
-  const [agents, setAgents] = useState<Agent[]>(mockAgents);
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [tasks] = useState<Task[]>(mockTasks);
-  const [systemState] = useState<SystemState>(mockSystemState);
-
-  // Events and commands come from real Supabase tables
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [systemState, setSystemState] = useState<SystemState>({
+    phase: '', phaseGoals: [], uptime: '0%', totalRevenue: 0, monthlyRevenue: 0,
+    activeProjects: 0, totalAgents: 0, onlineAgents: 0, tasksTodayCompleted: 0,
+    tasksTodayTotal: 0, apiCalls24h: 0, avgLatency: 0, failureRate: 0,
+  });
   const [events, setEvents] = useState<EventEntry[]>([]);
   const [commands, setCommands] = useState<CommandEntry[]>([]);
   const [autonomousMode, setAutonomousMode] = useState(false);
@@ -46,10 +50,18 @@ export function MissionControlProvider({ children }: { children: ReactNode }) {
 
   const refreshData = useCallback(async () => {
     try {
-      const [eventsData, commandsData] = await Promise.all([
+      const [agentsData, projectsData, tasksData, stateData, eventsData, commandsData] = await Promise.all([
+        fetchAgents(),
+        fetchProjects(),
+        fetchTasks(),
+        fetchSystemState(),
         fetchEvents({ limit: 100 }),
         fetchCommandHistory(50),
       ]);
+      setAgents(agentsData);
+      setProjects(projectsData);
+      setTasks(tasksData);
+      setSystemState(stateData);
       setEvents(eventsData);
       setCommands(commandsData);
     } catch (error) {
@@ -59,16 +71,20 @@ export function MissionControlProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    refreshData();
-  }, [refreshData]);
+  useEffect(() => { refreshData(); }, [refreshData]);
 
-  // Subscribe to real-time events
+  // Real-time subscriptions
   useEffect(() => {
-    const subscription = subscribeToEvents((event) => {
+    const eventSub = subscribeToEvents((event) => {
       setEvents(prev => [event as EventEntry, ...prev].slice(0, 100));
     });
-    return () => { subscription.unsubscribe(); };
+    const agentSub = subscribeToAgents((agents) => setAgents(agents));
+    const taskSub = subscribeToTasks((tasks) => setTasks(tasks));
+    return () => {
+      eventSub.unsubscribe();
+      agentSub.unsubscribe();
+      taskSub.unsubscribe();
+    };
   }, []);
 
   const addEvent = useCallback((event: EventEntry) => {
