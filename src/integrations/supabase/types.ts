@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          avatar: string | null
+          cost_total: number
+          created_at: string
+          current_task: string | null
+          id: string
+          last_activity: string | null
+          model: string
+          name: string
+          role: string
+          status: string
+          tasks_completed: number
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          cost_total?: number
+          created_at?: string
+          current_task?: string | null
+          id: string
+          last_activity?: string | null
+          model: string
+          name: string
+          role: string
+          status?: string
+          tasks_completed?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          cost_total?: number
+          created_at?: string
+          current_task?: string | null
+          id?: string
+          last_activity?: string | null
+          model?: string
+          name?: string
+          role?: string
+          status?: string
+          tasks_completed?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       commands: {
         Row: {
           command: string
@@ -74,6 +119,153 @@ export type Database = {
           project_id?: string | null
           task_id?: string | null
           timestamp?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          assigned_agents: string[]
+          completed_tasks: number
+          created_at: string
+          description: string
+          goal: string
+          id: string
+          name: string
+          progress: number
+          status: string
+          task_count: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_agents?: string[]
+          completed_tasks?: number
+          created_at?: string
+          description?: string
+          goal?: string
+          id: string
+          name: string
+          progress?: number
+          status?: string
+          task_count?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_agents?: string[]
+          completed_tasks?: number
+          created_at?: string
+          description?: string
+          goal?: string
+          id?: string
+          name?: string
+          progress?: number
+          status?: string
+          task_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_state: {
+        Row: {
+          active_projects: number
+          api_calls_24h: number
+          avg_latency: number
+          failure_rate: number
+          id: number
+          monthly_revenue: number
+          online_agents: number
+          phase: string
+          phase_goals: string[]
+          tasks_today_completed: number
+          tasks_today_total: number
+          total_agents: number
+          total_revenue: number
+          updated_at: string
+          uptime: string
+        }
+        Insert: {
+          active_projects?: number
+          api_calls_24h?: number
+          avg_latency?: number
+          failure_rate?: number
+          id?: number
+          monthly_revenue?: number
+          online_agents?: number
+          phase?: string
+          phase_goals?: string[]
+          tasks_today_completed?: number
+          tasks_today_total?: number
+          total_agents?: number
+          total_revenue?: number
+          updated_at?: string
+          uptime?: string
+        }
+        Update: {
+          active_projects?: number
+          api_calls_24h?: number
+          avg_latency?: number
+          failure_rate?: number
+          id?: number
+          monthly_revenue?: number
+          online_agents?: number
+          phase?: string
+          phase_goals?: string[]
+          tasks_today_completed?: number
+          tasks_today_total?: number
+          total_agents?: number
+          total_revenue?: number
+          updated_at?: string
+          uptime?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_agent: string | null
+          completion_time: string | null
+          created_at: string
+          dependencies: string[]
+          description: string
+          errors: string[]
+          id: string
+          logs: string[]
+          priority: string
+          project_id: string | null
+          start_time: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_agent?: string | null
+          completion_time?: string | null
+          created_at?: string
+          dependencies?: string[]
+          description?: string
+          errors?: string[]
+          id: string
+          logs?: string[]
+          priority?: string
+          project_id?: string | null
+          start_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_agent?: string | null
+          completion_time?: string | null
+          created_at?: string
+          dependencies?: string[]
+          description?: string
+          errors?: string[]
+          id?: string
+          logs?: string[]
+          priority?: string
+          project_id?: string | null
+          start_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
