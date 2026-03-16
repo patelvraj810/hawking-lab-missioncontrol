@@ -114,6 +114,28 @@ export function MissionControlProvider({ children }: { children: ReactNode }) {
           failureRate: 0,
         });
       }
+
+      // Fetch projects from Supabase
+      const { data: projectsData } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (projectsData && projectsData.length > 0) {
+        const formattedProjects: Project[] = projectsData.map(p => ({
+          id: p.id,
+          name: p.name || 'Untitled',
+          description: p.description || '',
+          goal: p.goal || '',
+          assignedAgents: p.assigned_agents || [],
+          progress: p.progress || 0,
+          status: p.status || 'planning',
+          createdAt: p.created_at || new Date().toISOString(),
+          taskCount: p.task_count || 0,
+          completedTasks: p.completed_tasks || 0,
+        }));
+        setProjects(formattedProjects);
+      }
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
